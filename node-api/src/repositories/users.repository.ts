@@ -1,11 +1,12 @@
 import mssql from "mssql";
 import { Table } from "mssql";
+import type { UserInsert } from "types/user";
 
 export class UsersRepository {
 
   constructor(private readonly pool: mssql.ConnectionPool) {}
 
-  async insertUsers(users: { NombreCompleto: string, DNI: number, Estado: string, FechaIngreso: Date, EsPEP: boolean, EsSujetoObligado: boolean | null }[]) {
+    async insertUsers(users: UserInsert[]) {
     const table = new Table("users");
     table.columns.add("NombreCompleto", mssql.NVarChar(100), { nullable: false });
     table.columns.add("DNI", mssql.BigInt, { nullable: false });
