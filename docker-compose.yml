@@ -12,9 +12,13 @@ services:
       - DB_USER=sa
       - DB_PASSWORD=YourStrong!Passw0rd
     ports:
-      - "1433:1433"
+      - '1433:1433'
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P YourStrong!Passw0rd -Q 'SELECT 1' || exit 1"]
+      test:
+        [
+          'CMD-SHELL',
+          "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P YourStrong!Passw0rd -Q 'SELECT 1' || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +42,7 @@ services:
       dockerfile: Dockerfile
     container_name: node-api
     ports:
-      - "3000:3000"
+      - '3000:3000'
     env_file:
       - ./.env
     environment:

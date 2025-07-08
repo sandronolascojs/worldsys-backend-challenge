@@ -1,7 +1,7 @@
-import { env } from "config/env.config";
-import mssql from "mssql";
+import { env } from 'config/env.config';
+import mssql from 'mssql';
 
-const isProduction = env.APP_ENV === "production";
+const isProduction = env.APP_ENV === 'production';
 
 const pool = new mssql.ConnectionPool({
   user: env.DB_USER,

@@ -19,16 +19,16 @@ spec:
             - containerPort: 1433
           env:
             - name: ACCEPT_EULA
-              value: "Y"
+              value: 'Y'
             - name: SA_PASSWORD
-              value: "YourStrong!Passw0rd"
+              value: 'YourStrong!Passw0rd'
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              memory: '512Mi'
+              cpu: '250m'
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: '1Gi'
+              cpu: '500m'
           readinessProbe:
             exec:
               command:
@@ -40,7 +40,7 @@ spec:
                 - -P
                 - YourStrong!Passw0rd
                 - -Q
-                - "SELECT 1"
+                - 'SELECT 1'
             initialDelaySeconds: 30
             periodSeconds: 10
 
@@ -79,28 +79,28 @@ spec:
             - containerPort: 3000
           env:
             - name: APP_ENV
-              value: "production"
+              value: 'production'
             - name: PORT
-              value: "3000"
+              value: '3000'
             - name: ALLOWED_ORIGINS
-              value: "*"
+              value: '*'
             - name: LOG_LEVEL
-              value: "info"
+              value: 'info'
             - name: DB_HOST
-              value: "sqlserver"
+              value: 'sqlserver'
             - name: DB_USER
-              value: "sa"
+              value: 'sa'
             - name: DB_PASSWORD
-              value: "YourStrong!Passw0rd"
+              value: 'YourStrong!Passw0rd'
             - name: DB_NAME
-              value: "master"
+              value: 'master'
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: '128Mi'
+              cpu: '100m'
             limits:
-              memory: "256Mi"
-              cpu: "200m"
+              memory: '256Mi'
+              cpu: '200m'
 ---
 apiVersion: v1
 kind: Service
@@ -113,4 +113,4 @@ spec:
     - protocol: TCP
       port: 3000
       targetPort: 3000
-  type: ClusterIP 
+  type: ClusterIP

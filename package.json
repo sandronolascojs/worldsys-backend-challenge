@@ -45,8 +45,11 @@
     "typescript": "^5.8.3"
   },
   "lint-staged": {
+    "*.{js,ts,tsx,jsx}": [
+      "pnpm run lint:fix"
+    ],
     "*.{js,ts,tsx,jsx,json,css,md,yaml,yml}": [
-      "pnpm format"
+      "pnpm run format"
     ]
   }
 }

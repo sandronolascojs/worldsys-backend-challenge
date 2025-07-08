@@ -1,6 +1,6 @@
+import { faker } from '@faker-js/faker';
 import fs from 'fs';
 import path from 'path';
-import { faker } from '@faker-js/faker';
 
 const FILE_PATH = path.resolve(__dirname, '../challenge/input/CLIENTES_IN_0425.dat');
 const RECORDS = 100_000;
@@ -50,5 +50,7 @@ for (let i = 0; i < RECORDS; i++) {
 }
 
 stream.end(() => {
-  console.log(`✅ Archivo generado con ${RECORDS} líneas (con errores intencionales: ~${Math.floor(RECORDS * ERROR_RATE)}) en: ${FILE_PATH}`);
+  console.log(
+    `✅ Archivo generado con ${RECORDS} líneas (con errores intencionales: ~${Math.floor(RECORDS * ERROR_RATE)}) en: ${FILE_PATH}`,
+  );
 });
