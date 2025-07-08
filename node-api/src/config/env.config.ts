@@ -18,7 +18,10 @@ export const _env = z.object({
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info").describe("The level of logging to use"),
 
     // database
-    DATABASE_URL: z.string().describe("The URL of the database to connect to"),
+    DB_HOST: z.string().describe("The host of the database to connect to"),
+    DB_USER: z.string().describe("The user of the database to connect to"),
+    DB_PASSWORD: z.string().describe("The password of the database to connect to"),
+    DB_NAME: z.string().describe("The name of the database to connect to"),
   })
   .safeParse(rawEnv)
 
