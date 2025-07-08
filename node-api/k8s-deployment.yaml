@@ -21,7 +21,7 @@ spec:
             - name: ACCEPT_EULA
               value: "Y"
             - name: SA_PASSWORD
-              value: "password"
+              value: "YourStrong!Passw0rd"
           resources:
             requests:
               memory: "512Mi"
@@ -38,7 +38,7 @@ spec:
                 - -U
                 - SA
                 - -P
-                - password
+                - YourStrong!Passw0rd
                 - -Q
                 - "SELECT 1"
             initialDelaySeconds: 30
@@ -91,7 +91,7 @@ spec:
             - name: DB_USER
               value: "sa"
             - name: DB_PASSWORD
-              value: "password"
+              value: "YourStrong!Passw0rd"
             - name: DB_NAME
               value: "master"
           resources:
