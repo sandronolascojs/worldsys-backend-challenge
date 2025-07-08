@@ -6,6 +6,8 @@ const rawEnv = {
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   LOG_LEVEL: process.env.LOG_LEVEL,
   DATABASE_URL: process.env.DATABASE_URL,
+  BATCH_SIZE: process.env.BATCH_SIZE,
+  CHECKPOINT_FILE: process.env.CHECKPOINT_FILE,
 }
 
 export const _env = z.object({
@@ -13,6 +15,8 @@ export const _env = z.object({
     APP_ENV: z.enum(["development", "production"]).default("development").describe("The environment to run the server on"),
     PORT: z.coerce.number().default(8000).describe("The port to run the server on"),
     ALLOWED_ORIGINS: z.string().transform((val) => val.split(",").map((origin) => origin.trim()).filter(Boolean)).describe("The allowed origins of the server"),
+    BATCH_SIZE: z.coerce.number().default(1000).describe("The batch size to use for the file processor"),
+    CHECKPOINT_FILE: z.string().default("processing.checkpoint").describe("The checkpoint file to use for the file processor"),
 
     // logging
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info").describe("The level of logging to use"),
