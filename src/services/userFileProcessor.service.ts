@@ -1,9 +1,10 @@
-import { env } from 'config/env.config';
 import fs from 'node:fs';
+import path from 'node:path';
 import readline from 'node:readline';
 import type { Logger } from 'pino';
-import { UserInsert, userToInsertSchema } from 'types/user';
 import { z } from 'zod';
+import { env } from '../config/env.config';
+import { UserInsert, userToInsertSchema } from '../types/user';
 import { UserService } from './user.service';
 
 // Permite configurar el tamaño de batch por variable de entorno
@@ -13,12 +14,20 @@ const CHECKPOINT_FILE = env.CHECKPOINT_FILE;
 export type UserToInsert = z.infer<typeof userToInsertSchema>;
 
 export class UserFileProcessorService {
+  private readonly filePath: string;
+  private readonly checkpointFile: string;
+
   constructor(
     private readonly userService: UserService,
-    private readonly filePath: string = process.env.CLIENTS_FILE_PATH ||
-      'challenge/input/CLIENTES_IN_0425.dat',
     private readonly logger: Logger,
-  ) {}
+    filePath?: string,
+    checkpointFile?: string,
+  ) {
+    this.filePath =
+      filePath ||
+      path.resolve(__dirname, '../lib/data-generator/challenge/input/CLIENTES_IN_0425.dat');
+    this.checkpointFile = checkpointFile || CHECKPOINT_FILE;
+  }
 
   /**
    * Procesa el archivo de usuarios en batches, tolerando errores, logueando métricas y progreso,
@@ -122,14 +131,13 @@ export class UserFileProcessorService {
     if (isNaN(DNI)) return null;
 
     const Estado = estado.trim();
+
     let FechaIngreso: Date;
-    try {
-      const [month, day, year] = fechaIngreso.split('/').map(Number);
-      FechaIngreso = new Date(year, month - 1, day);
-      if (isNaN(FechaIngreso.getTime())) return null;
-    } catch {
-      return null;
-    }
+    const dateMatch = fechaIngreso.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!dateMatch) return null;
+    const [, month, day, year] = dateMatch;
+    FechaIngreso = new Date(Number(year), Number(month) - 1, Number(day));
+    if (isNaN(FechaIngreso.getTime())) return null;
 
     const EsPEP = esPep.trim().toLowerCase() === 'true';
     let EsSujetoObligado: boolean | null = null;
@@ -175,12 +183,12 @@ export class UserFileProcessorService {
   }
 
   private saveCheckpoint(lineNumber: number) {
-    fs.writeFileSync(CHECKPOINT_FILE, lineNumber.toString());
+    fs.writeFileSync(this.checkpointFile, lineNumber.toString());
   }
 
   private loadCheckpoint(): number {
-    if (fs.existsSync(CHECKPOINT_FILE)) {
-      return parseInt(fs.readFileSync(CHECKPOINT_FILE, 'utf8'), 10) || 0;
+    if (fs.existsSync(this.checkpointFile)) {
+      return parseInt(fs.readFileSync(this.checkpointFile, 'utf8'), 10) || 0;
     }
     return 0;
   }
