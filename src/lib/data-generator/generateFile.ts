@@ -1,10 +1,13 @@
 import { faker } from '@faker-js/faker';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { logger } from '../../utils/logger.instance';
 
-const FILE_PATH = path.resolve(__dirname, '../challenge/input/CLIENTES_IN_0425.dat');
-const RECORDS = 100_000;
-const ERROR_RATE = 0.2; // 20% de líneas con errores intencionales, puedes modificarlo para tus pruebas.
+const FILE_PATH = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.resolve(__dirname, './challenge/input/CLIENTES_IN_0425.dat');
+const RECORDS = Number(process.env.RECORDS) || 100_000;
+const ERROR_RATE = Number(process.env.ERROR_RATE) || 0.2; // 20% de líneas con errores intencionales, puedes modificarlo para tus pruebas.
 
 // Asegurarse de que el directorio exista
 const dir = path.dirname(FILE_PATH);
@@ -50,7 +53,7 @@ for (let i = 0; i < RECORDS; i++) {
 }
 
 stream.end(() => {
-  console.log(
+  logger.info(
     `✅ Archivo generado con ${RECORDS} líneas (con errores intencionales: ~${Math.floor(RECORDS * ERROR_RATE)}) en: ${FILE_PATH}`,
   );
 });
