@@ -161,7 +161,9 @@ export class UserFileProcessorService {
     });
 
     if (!result.success) {
-      this.logger.warn(`Validation failed: ${JSON.stringify(result.error.issues)}`);
+      this.logger.warn(
+        `Validation failed: ${JSON.stringify(result.error.issues)} | Data: ${JSON.stringify({ NombreCompleto, DNI, Estado, FechaIngreso, EsPEP, EsSujetoObligado })}`,
+      );
       return null;
     }
 
