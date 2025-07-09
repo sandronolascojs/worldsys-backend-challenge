@@ -7,14 +7,18 @@ export class FileGeneratorService {
   private readonly outputPath: string;
 
   constructor(outputPath?: string, generatorPath?: string) {
+    const dataGeneratorDir = path.resolve(__dirname, '../lib/data-generator/challenge/input');
     this.outputPath = outputPath
       ? path.resolve(outputPath)
-      : path.resolve(
-          process.cwd(),
-          './src/lib/data-generator/challenge/input/CLIENTES_IN_0425.dat',
-        );
-    this.generatorPath =
-      generatorPath || path.resolve(process.cwd(), './src/lib/data-generator/generateFile.ts');
+      : path.join(dataGeneratorDir, 'CLIENTES_IN_0425.dat');
+
+    const isDist = __dirname.includes('/dist/');
+    const generatorFileName = isDist ? 'generateFile.js' : 'generateFile.ts';
+    const generatorPathBase = isDist
+      ? path.resolve(process.cwd(), 'dist/src/lib/data-generator')
+      : path.resolve(process.cwd(), 'src/lib/data-generator');
+
+    this.generatorPath = generatorPath || path.join(generatorPathBase, generatorFileName);
   }
 
   /**
