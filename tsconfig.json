@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "lib": ["ES2020"],
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
