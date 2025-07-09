@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
+import { fileGeneratorController } from 'controllers/fileGenerator.controller';
 import fastify from 'fastify';
 import { corsOptions } from './config/cors.options';
 import { env } from './config/env.config';
@@ -22,6 +23,7 @@ server.register(errorHandlerPlugin);
 server.register(
   (instance) => {
     instance.register(publicController);
+    instance.register(fileGeneratorController);
   },
   { prefix: '/api/v1' },
 );
