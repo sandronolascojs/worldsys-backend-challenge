@@ -174,17 +174,21 @@ export class UserFileProcessorService {
    * Inserta un batch de usuarios con reintentos y logueo de errores.
    */
   private async insertBatch(batch: UserInsert[]): Promise<void> {
+    const validUsers = batch.filter(Boolean);
+    if (validUsers.length === 0) return;
+
     let attempts = 0;
     const maxAttempts = 2;
     while (attempts < maxAttempts) {
       try {
-        await this.userService.bulkInsertUsers(batch);
+        await this.userService.bulkInsertUsers(validUsers);
         return;
       } catch (error) {
         attempts++;
         this.logger.error(`Error inserting batch (attempt ${attempts})`, { error });
         if (attempts >= maxAttempts) {
-          fs.appendFileSync('failed_batches.log', JSON.stringify(batch) + '\n');
+          const failedLogPath = path.join(path.dirname(this.filePath), 'failed_batches.log');
+          fs.appendFileSync(failedLogPath, JSON.stringify(validUsers) + '\n');
         }
       }
     }
