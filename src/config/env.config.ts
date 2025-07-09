@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { z } from 'zod';
 
 const rawEnv = {
@@ -5,16 +6,19 @@ const rawEnv = {
   PORT: process.env.PORT,
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   LOG_LEVEL: process.env.LOG_LEVEL,
-  DATABASE_URL: process.env.DATABASE_URL,
   BATCH_SIZE: process.env.BATCH_SIZE,
   CHECKPOINT_FILE: process.env.CHECKPOINT_FILE,
+  DB_HOST: process.env.DB_HOST,
+  DB_USER: process.env.DB_USER,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_NAME: process.env.DB_NAME,
 };
 
 export const _env = z
   .object({
     // environment
     APP_ENV: z
-      .enum(['development', 'production'])
+      .enum(['development', 'production', 'test'])
       .default('development')
       .describe('The environment to run the server on'),
     PORT: z.coerce.number().default(8000).describe('The port to run the server on'),
