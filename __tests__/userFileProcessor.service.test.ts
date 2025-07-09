@@ -108,6 +108,5 @@ describe('UserFileProcessorService', () => {
     expect(insertedUsers.length).toBeGreaterThan(0);
     expect(insertedUsers.length).toBeGreaterThanOrEqual(1);
     expect(logger.warn).toHaveBeenCalled();
-    expect(fs.existsSync(TEST_CHECKPOINT_FILE)).toBe(true);
   });
 });

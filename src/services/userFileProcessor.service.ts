@@ -111,6 +111,12 @@ export class UserFileProcessorService {
       );
     }
 
+    // Remove checkpoint file after processing is complete
+    if (fs.existsSync(this.checkpointFile)) {
+      fs.unlinkSync(this.checkpointFile);
+      this.logger.info(`Checkpoint file ${this.checkpointFile} removed after processing.`);
+    }
+
     const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
     this.logger.info(
       `File processing completed in ${totalTime}s. Total: ${total}, Inserted: ${processed}, Failed: ${failed}. Peak memory: ${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`,
