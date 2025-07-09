@@ -7,11 +7,15 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --config ./.prettierrc --write --ignore-path .gitignore .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "dotenv -e ./.env -- vitest",
+    "test:watch": "dotenv -e ./.env -- vitest watch",
+    "test:coverage": "dotenv -e ./.env -- vitest run --coverage",
+    "test:ui": "dotenv -e ./.env -- vitest --ui"
   },
   "keywords": [],
   "author": "",
@@ -42,11 +46,15 @@
     "prettier-package-json": "^2.8.0",
     "prettier-plugin-organize-imports": "^4.1.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "lint-staged": {
+    "*.{js,ts,tsx,jsx}": [
+      "pnpm run lint:fix"
+    ],
     "*.{js,ts,tsx,jsx,json,css,md,yaml,yml}": [
-      "pnpm format"
+      "pnpm run format"
     ]
   }
 }

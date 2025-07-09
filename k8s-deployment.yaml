@@ -1,8 +1,86 @@
-apiVersion: apps/v1
-kind: Deployment
+# ────────────────────────────────────────────────────────────────────────────────
+# 1. Secreto con la contraseña del usuario SA
+# ────────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-secret
+type: Opaque
+stringData:
+  SA_PASSWORD: 'YourStrong!Passw0rd'
+---
+# ────────────────────────────────────────────────────────────────────────────────
+# 2. ConfigMap con el script de migración
+# ────────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sqlserver-init-script
+data:
+  init.sql: |
+    IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'worldsys')
+    BEGIN
+        CREATE DATABASE [worldsys];
+        PRINT 'Database worldsys created successfully';
+    END
+    GO
+    USE [worldsys];
+    GO
+    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[users]') AND type = N'U')
+    BEGIN
+        CREATE TABLE [dbo].[users] (
+            [Id] INT IDENTITY(1,1) PRIMARY KEY,
+            [NombreCompleto] NVARCHAR(100) NOT NULL,
+            [DNI] BIGINT NOT NULL,
+            [Estado] VARCHAR(10) NOT NULL,
+            [FechaIngreso] DATE NOT NULL,
+            [EsPEP] BIT NOT NULL,
+            [EsSujetoObligado] BIT NULL,
+            [FechaCreacion] DATETIME NOT NULL DEFAULT GETDATE()
+        );
+        CREATE INDEX [IX_Users_DNI] ON [dbo].[users]([DNI]);
+        PRINT 'Users table created successfully';
+    END
+    ELSE
+        PRINT 'Users table already exists';
+---
+# ────────────────────────────────────────────────────────────────────────────────
+# 3. Service estable para el StatefulSet (ClusterIP)
+# ────────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
 metadata:
   name: sqlserver
 spec:
+  selector:
+    app: sqlserver
+  ports:
+    - port: 1433
+      targetPort: 1433
+  type: ClusterIP
+---
+# ────────────────────────────────────────────────────────────────────────────────
+# 4. PersistentVolumeClaim (10 GiB, ReadWriteOnce)
+# ────────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sqlserver-data
+spec:
+  accessModes: ['ReadWriteOnce']
+  resources:
+    requests:
+      storage: 10Gi
+---
+# ────────────────────────────────────────────────────────────────────────────────
+# 5. StatefulSet de SQL Server
+# ────────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+spec:
+  serviceName: sqlserver
   replicas: 1
   selector:
     matchLabels:
@@ -12,6 +90,7 @@ spec:
       labels:
         app: sqlserver
     spec:
+      terminationGracePeriodSeconds: 60
       containers:
         - name: sqlserver
           image: mcr.microsoft.com/mssql/server:2022-latest
@@ -19,45 +98,98 @@ spec:
             - containerPort: 1433
           env:
             - name: ACCEPT_EULA
-              value: "Y"
+              value: 'Y'
+            - name: MSSQL_PID
+              value: 'Developer'
             - name: SA_PASSWORD
-              value: "YourStrong!Passw0rd"
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: SA_PASSWORD
           resources:
-            requests:
-              memory: "512Mi"
-              cpu: "250m"
             limits:
-              memory: "1Gi"
-              cpu: "500m"
+              cpu: '500m'
+              memory: '1Gi'
+            requests:
+              cpu: '250m'
+              memory: '512Mi'
+          volumeMounts:
+            - name: data
+              mountPath: /var/opt/mssql
           readinessProbe:
-            exec:
-              command:
-                - /opt/mssql-tools/bin/sqlcmd
-                - -S
-                - localhost
-                - -U
-                - SA
-                - -P
-                - YourStrong!Passw0rd
-                - -Q
-                - "SELECT 1"
-            initialDelaySeconds: 30
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 90
             periodSeconds: 10
-
+          livenessProbe:
+            tcpSocket:
+              port: 1433
+            initialDelaySeconds: 180
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sqlserver-data
 ---
+# ────────────────────────────────────────────────────────────────────────────────
+# 6. Job de migración
+# ────────────────────────────────────────────────────────────────────────────────
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sqlserver-migration
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: init-script
+          configMap:
+            name: sqlserver-init-script
+      containers:
+        - name: migrate
+          image: mcr.microsoft.com/mssql-tools
+          volumeMounts:
+            - name: init-script
+              mountPath: /init
+          env:
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: SA_PASSWORD
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "⏳ Waiting for SQL Server..."
+              for i in {1..90}; do
+                /opt/mssql-tools/bin/sqlcmd -S sqlserver -U SA -P "$SA_PASSWORD" -Q "SELECT 1" && break
+                echo "   ...still not ready ($i/90)"; sleep 5
+              done
+              echo "✅ SQL Server ready. Running migrations..."
+              /opt/mssql-tools/bin/sqlcmd -S sqlserver -U SA -P "$SA_PASSWORD" -d master -i /init/init.sql
+---
+# ────────────────────────────────────────────────────────────────────────────────
+# 7. Service para la API Node.js
+# ────────────────────────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:
-  name: sqlserver
+  name: node-api
 spec:
   selector:
-    app: sqlserver
+    app: node-api
   ports:
-    - protocol: TCP
-      port: 1433
-      targetPort: 1433
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
   type: ClusterIP
 ---
+# ────────────────────────────────────────────────────────────────────────────────
+# 8. Deployment de la API Node.js
+# ────────────────────────────────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -72,45 +204,54 @@ spec:
       labels:
         app: node-api
     spec:
+      initContainers:
+        - name: wait-sqlserver
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "⏳ Waiting for sqlserver:1433..."
+              until nc -z sqlserver 1433; do
+                echo "   ...still not up"
+                sleep 5
+              done
+              echo "✅ sqlserver is reachable"
       containers:
         - name: node-api
           image: nolask/node-api:latest
           ports:
             - containerPort: 3000
           env:
-            - name: APP_ENV
-              value: "production"
             - name: PORT
-              value: "3000"
-            - name: ALLOWED_ORIGINS
-              value: "*"
-            - name: LOG_LEVEL
-              value: "info"
+              value: '3000'
             - name: DB_HOST
-              value: "sqlserver"
+              value: 'sqlserver'
             - name: DB_USER
-              value: "sa"
+              value: 'sa'
             - name: DB_PASSWORD
-              value: "YourStrong!Passw0rd"
+              valueFrom:
+                secretKeyRef:
+                  name: sqlserver-secret
+                  key: SA_PASSWORD
             - name: DB_NAME
-              value: "master"
+              value: 'worldsys'
           resources:
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
             limits:
-              memory: "256Mi"
-              cpu: "200m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: node-api
-spec:
-  selector:
-    app: node-api
-  ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
-  type: ClusterIP 
+              cpu: '200m'
+              memory: '256Mi'
+            requests:
+              cpu: '100m'
+              memory: '128Mi'
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20

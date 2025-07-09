@@ -1,17 +1,22 @@
-import { env } from "config/env.config";
-import mssql from "mssql";
+import mssql from 'mssql';
+import { env } from '../config/env.config';
 
-const isProduction = env.APP_ENV === "production";
+let _pool: mssql.ConnectionPool | null = null;
+const isProduction = env.APP_ENV === 'production';
 
-const pool = new mssql.ConnectionPool({
-  user: env.DB_USER,
-  password: env.DB_PASSWORD,
-  server: env.DB_HOST,
-  database: env.DB_NAME,
-  options: {
-    encrypt: isProduction,
-    trustServerCertificate: !isProduction,
-  },
-});
+export async function getDbPool(): Promise<mssql.ConnectionPool> {
+  if (_pool && _pool.connected) {
+    return _pool;
+  }
 
-export default pool;
+  _pool = await mssql.connect({
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    server: env.DB_HOST,
+    database: env.DB_NAME,
+    port: env.DB_PORT,
+    options: { encrypt: isProduction, trustServerCertificate: !isProduction },
+  });
+
+  return _pool;
+}

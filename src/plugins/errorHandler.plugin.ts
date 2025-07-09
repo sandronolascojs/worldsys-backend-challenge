@@ -1,6 +1,6 @@
-import { FastifyInstance, FastifyError, FastifyReply, FastifyRequest } from "fastify";
-import { logger } from "../utils/logger.instance";
-import { ErrorBase } from "../utils/errors/error.base";
+import { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { ErrorBase } from '../utils/errors/error.base';
+import { logger } from '../utils/logger.instance';
 
 export const errorHandlerPlugin = (fastify: FastifyInstance) => {
   fastify.setErrorHandler((error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
@@ -14,7 +14,7 @@ export const errorHandlerPlugin = (fastify: FastifyInstance) => {
     };
 
     if (error instanceof ErrorBase) {
-      logger.error({ err: error, req: requestContext }, "Handled application error");
+      logger.error({ err: error, req: requestContext }, 'Handled application error');
       return reply.status(error.statusCode).send({
         statusCode: error.statusCode,
         error: error.name,
@@ -22,11 +22,11 @@ export const errorHandlerPlugin = (fastify: FastifyInstance) => {
       });
     }
 
-    logger.error({ err: error, req: requestContext }, "Unhandled error");
+    logger.error({ err: error, req: requestContext }, 'Unhandled error');
     return reply.status(500).send({
       statusCode: 500,
-      error: "InternalServerError",
-      message: "An unexpected error occurred.",
+      error: 'InternalServerError',
+      message: 'An unexpected error occurred.',
     });
   });
 };

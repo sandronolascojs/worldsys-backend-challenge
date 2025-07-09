@@ -1,8 +1,8 @@
-import { env } from "../config/env.config";
-import pino, { LoggerOptions } from "pino";
+import pino, { LoggerOptions } from 'pino';
+import { env } from '../config/env.config';
 
-const isProduction = env.APP_ENV === "production";
-const level = env.LOG_LEVEL || (isProduction ? "info" : "debug");
+const isProduction = env.APP_ENV === 'production';
+const level = env.LOG_LEVEL || (isProduction ? 'info' : 'debug');
 
 export const loggerOptions: LoggerOptions = {
   level,
@@ -15,11 +15,11 @@ export const loggerOptions: LoggerOptions = {
     ? {}
     : {
         transport: {
-          target: "pino-pretty",
+          target: 'pino-pretty',
           options: {
             colorize: true,
-            ignore: "pid,hostname",
-            translateTime: "SYS:standard",
+            ignore: 'pid,hostname',
+            translateTime: 'SYS:standard',
           },
         },
       }),

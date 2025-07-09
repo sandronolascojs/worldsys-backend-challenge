@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "outDir": "dist",
     "lib": ["ES2020"],
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": "./src",
+    "baseUrl": "./src"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
