@@ -99,16 +99,9 @@ curl -X POST http://localhost:8001/api/v1/generate-file \
 - **Eliminación automática del checkpoint al finalizar:**  
   Una vez que el procesamiento termina exitosamente, el archivo de checkpoint se elimina automáticamente para evitar reanudaciones innecesarias en futuras ejecuciones.
 
----
-
-¿Te gustaría que agregue este texto directamente en tu archivo `instructions.md` o prefieres que lo adapte a otro formato?
-
----
 
 ## Notas adicionales
 
-- El backend corre por defecto en el puerto `8001`.
-- Si necesitas modificar variables de entorno, puedes hacerlo en el archivo `.env`.
 - Para correr los tests, puedes usar `pnpm test` (requiere tener pnpm instalado y dependencias instaladas).
 
 ---
