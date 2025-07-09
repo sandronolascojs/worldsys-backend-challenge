@@ -9,9 +9,12 @@ const rawEnv = {
   BATCH_SIZE: process.env.BATCH_SIZE,
   CHECKPOINT_FILE: process.env.CHECKPOINT_FILE,
   DB_HOST: process.env.DB_HOST,
+  DB_PORT: process.env.DB_PORT,
   DB_USER: process.env.DB_USER,
   DB_PASSWORD: process.env.DB_PASSWORD,
   DB_NAME: process.env.DB_NAME,
+  DB_ENCRYPT: process.env.DB_ENCRYPT,
+  DB_TRUST_SERVER_CERTIFICATE: process.env.DB_TRUST_SERVER_CERTIFICATE,
 };
 
 export const _env = z
@@ -48,9 +51,18 @@ export const _env = z
 
     // database
     DB_HOST: z.string().describe('The host of the database to connect to'),
+    DB_PORT: z.coerce.number().default(1433).describe('The port of the database to connect to'),
     DB_USER: z.string().describe('The user of the database to connect to'),
     DB_PASSWORD: z.string().describe('The password of the database to connect to'),
     DB_NAME: z.string().describe('The name of the database to connect to'),
+    DB_ENCRYPT: z.coerce
+      .boolean()
+      .default(true)
+      .describe('Whether to encrypt the connection to the database'),
+    DB_TRUST_SERVER_CERTIFICATE: z.coerce
+      .boolean()
+      .default(true)
+      .describe('Whether to trust the server certificate of the database'),
   })
   .safeParse(rawEnv);
 
