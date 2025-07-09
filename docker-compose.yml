@@ -1,16 +1,54 @@
 version: '3.8'
 
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    platform: linux/amd64
-    container_name: sqlserver
+  # -----------------------------------------------------------------------------
+  # SQL Server for Linux/Windows (default, commented out for mac compatibility)
+  # -----------------------------------------------------------------------------
+  # sqlserver:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   platform: linux/amd64
+  #   container_name: sqlserver
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - SA_PASSWORD=YourStrong!Passw0rd
+  #     - DB_NAME=master
+  #     - DB_USER=sa
+  #     - DB_PASSWORD=YourStrong!Passw0rd
+  #   ports:
+  #     - '1433:1433'
+  #   healthcheck:
+  #     test:
+  #       [
+  #         'CMD-SHELL',
+  #         "/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P YourStrong!Passw0rd -Q 'SELECT 1' || exit 1",
+  #       ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - backend
+  #   volumes:
+  #     - ./migrations/init.sql:/init.sql
+  #   command: >
+  #     bash -c "
+  #       /opt/mssql/bin/sqlservr &
+  #       echo 'Waiting for SQL Server to start...'
+  #       sleep 30
+  #       /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -d master -i /init.sql
+  #       echo 'Database setup completed successfully'
+  #       wait
+  #     "
+
+  # -----------------------------------------------------------------------------
+  # SQL Server compatible for Mac (Azure SQL Edge)
+  # -----------------------------------------------------------------------------
+  sqledge:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: sqledge
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong!Passw0rd
-      - DB_NAME=master
-      - DB_USER=sa
-      - DB_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
+      - MSSQL_PID=Developer
     ports:
       - '1433:1433'
     healthcheck:
@@ -26,15 +64,25 @@ services:
       - backend
     volumes:
       - ./migrations/init.sql:/init.sql
-    command: >
+    command: /opt/mssql/bin/sqlservr
+
+  migrate:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      - sqledge
+    entrypoint: >
       bash -c "
-        /opt/mssql/bin/sqlservr &
-        echo 'Waiting for SQL Server to start...'
-        sleep 30
-        /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -d master -i /init.sql
-        echo 'Database setup completed successfully'
-        wait
+        for i in {1..30}; do
+          /opt/mssql-tools/bin/sqlcmd -S sqledge -U sa -P 'YourStrong!Passw0rd' -Q 'SELECT 1' && break
+          echo 'Waiting for SQL Edge to be ready...'
+          sleep 5
+        done
+        /opt/mssql-tools/bin/sqlcmd -S sqledge -U sa -P 'YourStrong!Passw0rd' -d master -i /init.sql
       "
+    volumes:
+      - ./migrations/init.sql:/init.sql
+    networks:
+      - backend
 
   node-api:
     build:
@@ -46,13 +94,13 @@ services:
     env_file:
       - ./.env
     environment:
-      - DB_HOST=sqlserver
+      - DB_HOST=sqledge
       - DB_USER=sa
       - DB_PASSWORD=YourStrong!Passw0rd
       - DB_NAME=worldsys
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - backend
     mem_limit: 256m
