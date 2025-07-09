@@ -1,11 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { pool } from 'mssql';
-import { UsersRepository } from 'repositories/users.repository';
-import { logger } from 'utils/logger.instance';
 import { z } from 'zod';
+import { getDbPool } from '../lib/db.lib';
+import { UsersRepository } from '../repositories/users.repository';
 import { FileGeneratorService } from '../services/fileGenerator.service';
 import { UserService } from '../services/user.service';
 import { UserFileProcessorService } from '../services/userFileProcessor.service';
+import { logger } from '../utils/logger.instance';
 
 const fileGeneratorService = new FileGeneratorService();
 
@@ -49,6 +49,7 @@ export const fileGeneratorController = async (fastify: FastifyInstance) => {
 
   // Endpoint para iniciar el procesamiento del archivo generado
   fastify.post('/start-processing', async (_request, reply) => {
+    const pool = await getDbPool();
     const userService = new UserService(new UsersRepository(pool));
     const processor = new UserFileProcessorService(userService, logger);
     try {
