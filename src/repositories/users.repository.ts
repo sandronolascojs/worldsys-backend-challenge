@@ -1,5 +1,5 @@
 import mssql, { Table } from 'mssql';
-import type { UserInsert } from 'types/user';
+import type { UserInsert } from '../types/user';
 
 export class UsersRepository {
   constructor(private readonly pool: mssql.ConnectionPool) {}
