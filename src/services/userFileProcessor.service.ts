@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import type { Logger } from 'pino';
+import { ConflictError } from 'utils/errors/ConflictError';
 import { z } from 'zod';
 import { env } from '../config/env.config';
 import { UserInsert, userToInsertSchema } from '../types/user';
@@ -37,6 +38,15 @@ export class UserFileProcessorService {
     this.logger.info(`Starting processing file: ${this.filePath}`);
     const startTime = Date.now();
     let fileSize = 0;
+
+    if (!fs.existsSync(this.filePath)) {
+      this.logger.error(`File does not exist: ${this.filePath}`);
+      throw new ConflictError({
+        message:
+          'The input file was not found. Please generate the file first by using the /api/v1/generate-file endpoint before starting the processing.',
+      });
+    }
+
     try {
       fileSize = fs.statSync(this.filePath).size;
     } catch (err) {
