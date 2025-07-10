@@ -99,7 +99,6 @@ curl -X POST http://localhost:8001/api/v1/generate-file \
 - **Eliminación automática del checkpoint al finalizar:**  
   Una vez que el procesamiento termina exitosamente, el archivo de checkpoint se elimina automáticamente para evitar reanudaciones innecesarias en futuras ejecuciones.
 
-
 ## Notas adicionales
 
 - Para correr los tests, puedes usar `pnpm test` (requiere tener pnpm instalado y dependencias instaladas).
