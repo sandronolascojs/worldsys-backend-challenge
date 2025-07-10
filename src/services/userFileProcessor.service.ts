@@ -17,17 +17,21 @@ export type UserToInsert = z.infer<typeof userToInsertSchema>;
 export class UserFileProcessorService {
   private readonly filePath: string;
   private readonly checkpointFile: string;
+  private readonly failedLinesFile: string;
 
   constructor(
     private readonly userService: UserService,
     private readonly logger: Logger,
     filePath?: string,
     checkpointFile?: string,
+    failedLinesFile?: string,
   ) {
     this.filePath =
       filePath ||
       path.resolve(__dirname, '../lib/data-generator/challenge/input/CLIENTES_IN_0425.dat');
     this.checkpointFile = checkpointFile || CHECKPOINT_FILE;
+    this.failedLinesFile =
+      failedLinesFile || path.join(path.dirname(this.filePath), 'failed_lines.log');
   }
 
   /**
@@ -90,6 +94,8 @@ export class UserFileProcessorService {
       } else {
         failed++;
         this.logger.warn(`Invalid line at ${total}: ${line}`);
+        // Guardar línea fallida en archivo
+        fs.appendFileSync(this.failedLinesFile, line + '\n');
       }
 
       if (batch.length >= BATCH_SIZE) {
@@ -125,6 +131,14 @@ export class UserFileProcessorService {
     if (fs.existsSync(this.checkpointFile)) {
       fs.unlinkSync(this.checkpointFile);
       this.logger.info(`Checkpoint file ${this.checkpointFile} removed after processing.`);
+    }
+
+    if (fs.existsSync(this.failedLinesFile)) {
+      const failedCount = fs
+        .readFileSync(this.failedLinesFile, 'utf8')
+        .split('\n')
+        .filter(Boolean).length;
+      this.logger.info(`Failed lines saved in ${this.failedLinesFile}: ${failedCount}`);
     }
 
     const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
